@@ -1,0 +1,175 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#define MAX_REQUESTS 100
+
+void sort(int arr[], int n) {
+    int temp;
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void sstf(int requests[], int n, int initial_head) {
+    int total_seek_time = 0;
+    int current_head = initial_head;
+    int visited[MAX_REQUESTS] = {0};
+
+    for (int i = 0; i < n; i++) {
+        int min_seek = INT_MAX;
+        int next_request = -1;
+
+        for (int j = 0; j < n; j++) {
+            if (!visited[j]) {
+                int seek = abs(current_head - requests[j]);
+                if (seek < min_seek) {
+                    min_seek = seek;
+                    next_request = j;
+                }
+            }
+        }
+
+        visited[next_request] = 1;
+        total_seek_time += min_seek;
+        printf("Move from %d to %d (Seek Time: %d)\n", current_head, requests[next_request], min_seek);
+        current_head = requests[next_request];
+    }
+
+    printf("Total Seek Time: %d\n", total_seek_time);
+}
+
+void scan(int requests[], int n, int initial_head, int max_track) {
+    int total_seek_time = 0;
+    int current_head = initial_head;
+
+    sort(requests, n);
+
+    total_seek_time += abs(current_head - max_track);
+    current_head = max_track;
+    printf("Move to right end: %d (Seek Time: %d)\n", max_track, abs(initial_head - max_track));
+
+    for (int i = 0; i < n; i++) {
+        if (requests[i] >= initial_head) {
+            total_seek_time += abs(current_head - requests[i]);
+            current_head = requests[i];
+            printf("Move to: %d (Seek Time: %d)\n", current_head, abs(current_head - requests[i]));
+        }
+    }
+
+    total_seek_time += abs(current_head - 0);
+    current_head = 0;
+    printf("Move to left end: 0 (Seek Time: %d)\n", abs(current_head));
+
+    for (int i = n - 1; i >= 0; i--) {
+        if (requests[i] < initial_head) {
+            total_seek_time += abs(current_head - requests[i]);
+            current_head = requests[i];
+            printf("Move to: %d (Seek Time: %d)\n", current_head, abs(current_head - requests[i]));
+        }
+    }
+
+    printf("Total Seek Time: %d\n", total_seek_time);
+}
+
+void clook(int requests[], int n, int initial_head, int max_track) {
+    int total_seek_time = 0;
+    int current_head = initial_head;
+    sort(requests, n);
+    int initial_index = 0;
+
+    while (initial_index < n && requests[initial_index] <= initial_head) {
+        initial_index++;
+    }
+
+    if (current_head < max_track) {
+        total_seek_time += abs(current_head - max_track);
+        current_head = max_track;
+        printf("Move from %d to %d (Seek Time: %d)\n", initial_head, max_track, abs(initial_head - max_track));
+    }
+
+    for (int i = initial_index; i < n; i++) {
+        int seek = abs(current_head - requests[i]);
+        total_seek_time += seek;
+        printf("Move from %d to %d (Seek Time: %d)\n", current_head, requests[i], seek);
+        current_head = requests[i];
+    }
+
+    if (current_head > requests[0]) {
+        total_seek_time += abs(current_head - requests[0]);
+        printf("Move from %d to %d (Seek Time: %d)\n", current_head, requests[0], abs(current_head - requests[0]));
+        current_head = requests[0];
+    }
+
+    for (int i = 0; i < initial_index; i++) {
+        int seek = abs(current_head - requests[i]);
+        total_seek_time += seek;
+        printf("Move from %d to %d (Seek Time: %d)\n", current_head, requests[i], seek);
+        current_head = requests[i];
+    }
+
+    printf("Total Seek Time: %d\n", total_seek_time);
+}
+
+int main() {
+    int n, initial_head, max_track, choice;
+
+    printf("Enter the number of requests: ");
+    scanf("%d", &n);
+    if (n <= 0 || n > MAX_REQUESTS) {
+        printf("Invalid number of requests.\n");
+        return 1;
+    }
+
+    int requests[MAX_REQUESTS];
+
+    printf("Enter the initial head position: ");
+    scanf("%d", &initial_head);
+
+    printf("Enter the maximum track position: ");
+    scanf("%d", &max_track);
+
+    printf("Enter the track positions for %d requests:\n", n);
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &requests[i]);
+        if (requests[i] < 0 || requests[i] > max_track) {
+            printf("Invalid request position.\n");
+            return 1;
+        }
+    }
+
+    char continue_choice;
+    do {
+        printf("\nSelect the disk scheduling algorithm:\n");
+        printf("1. Shortest Seek Time First (SSTF)\n");
+        printf("2. SCAN\n");
+        printf("3. C-LOOK\n");
+        printf("Enter your choice (1-3): ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                sstf(requests, n, initial_head);
+                break;
+            case 2:
+                scan(requests, n, initial_head, max_track);
+                break;
+            case 3:
+                clook(requests, n, initial_head, max_track);
+                break;
+            default:
+                printf("Invalid choice.\n");
+                break;
+        }
+
+        printf("Do you want to select another algorithm? (y/n): ");
+        scanf(" %c", &continue_choice);
+    } while (continue_choice == 'y' || continue_choice == 'Y');
+
+    return 0;
+}
