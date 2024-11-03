@@ -1,0 +1,73 @@
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+sem_t empty, full, mutex;
+int buffer[5];
+int in = 0;
+int out = 0;
+
+void* producer(void* arg) {
+    for (int i = 0; i < 10; i++) {
+        int data = rand() % 100;
+
+        sem_wait(&empty);
+        sem_wait(&mutex);
+
+        buffer[in] = data;
+        printf("\nProduct %d produced by %lu\n", data, pthread_self());
+        in = (in + 1) % 5;
+
+        sem_post(&mutex);
+        sem_post(&full);
+
+        sleep(1);
+    }
+    return NULL;
+}
+
+void* consumer(void* arg) {
+    for (int i = 0; i < 10; i++) {
+        int data;
+
+        sem_wait(&full);
+        sem_wait(&mutex);
+
+        data = buffer[out];
+        printf("\nProduct %d consumed by %lu\n", data, pthread_self());
+        out = (out + 1) % 5;
+
+        sem_post(&mutex);
+        sem_post(&empty);
+
+        sleep(1);
+    }
+    return NULL;
+}
+
+int main() {
+    pthread_t producers[5], consumer_thread;
+
+    sem_init(&empty, 0, 5);
+    sem_init(&full, 0, 0);
+    sem_init(&mutex, 0, 1);
+
+    for (int i = 0; i < 5; i++) {
+        pthread_create(&producers[i], NULL, producer, NULL);
+    }
+
+    pthread_create(&consumer_thread, NULL, consumer, NULL);
+
+    for (int i = 0; i < 5; i++) {
+        pthread_join(producers[i], NULL);
+    }
+    pthread_join(consumer_thread, NULL);
+
+    sem_destroy(&empty);
+    sem_destroy(&full);
+    sem_destroy(&mutex);
+
+    return 0;
+}
