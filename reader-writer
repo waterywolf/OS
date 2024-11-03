@@ -1,0 +1,61 @@
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+#include <stdio.h>
+
+sem_t r, w;
+int rcount = 0;
+
+#define NUM_THREADS 10
+
+void* reader(void* arg) {
+    sem_wait(&r);
+    rcount++;
+    if (rcount == 1) {
+        sem_wait(&w);
+    }
+    sem_post(&r);
+
+    printf("\nReading operation is performed by thread %lu\n", pthread_self());
+    sleep(1);
+
+    sem_wait(&r);
+    rcount--;
+    if (rcount == 0) {
+        sem_post(&w);
+    }
+    sem_post(&r);
+
+    return NULL;
+}
+
+void* writer(void* arg) {
+    sem_wait(&w);
+    printf("\nWriting operation is performed by thread %lu\n", pthread_self());
+    sleep(1);
+    sem_post(&w);
+
+    return NULL;
+}
+
+int main() {
+    pthread_t Rtid[NUM_THREADS], Wtid[NUM_THREADS];
+
+    sem_init(&r, 0, 1);
+    sem_init(&w, 0, 1);
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_create(&Rtid[i], NULL, reader, NULL);
+        pthread_create(&Wtid[i], NULL, writer, NULL);
+    }
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        pthread_join(Rtid[i], NULL);
+        pthread_join(Wtid[i], NULL);
+    }
+
+    sem_destroy(&r);
+    sem_destroy(&w);
+
+    return 0;
+}
