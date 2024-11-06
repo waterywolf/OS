@@ -24,21 +24,23 @@ void initialize() {
 }
 
 int isHit(int data) {
-    hit = 0;
     for (j = 0; j < nf; j++) {
         if (p[j] == data) {
-            hit = 1;
-            break;
+            return 1;
         }
     }
-    return hit;
+    return 0;
 }
 
 void dispPages() {
+    printf(" | Frames: ");
     for (k = 0; k < nf; k++) {
         if (p[k] != -1)
-            printf(" %d", p[k]);
+            printf(" %d ", p[k]);
+        else
+            printf(" - ");
     }
+    printf("\n");
 }
 
 void dispPgFaultCnt() {
@@ -50,15 +52,17 @@ void fifo() {
     int pointer = 0;
 
     for (i = 0; i < n; i++) {
-        printf("\nFor %d :", in[i]);
+        printf("\nProcessing page %d", in[i]);
 
         if (!isHit(in[i])) {
             p[pointer] = in[i];
             pointer = (pointer + 1) % nf;
             pgfaultcnt++;
+            printf(" | Page fault occurred. ");
             dispPages();
         } else {
-            printf(" No page fault");
+            printf(" | No page fault.");
+            dispPages();
         }
     }
     dispPgFaultCnt();
@@ -69,7 +73,7 @@ void optimal() {
     int near[50];
 
     for (i = 0; i < n; i++) {
-        printf("\nFor %d :", in[i]);
+        printf("\nProcessing page %d", in[i]);
 
         if (!isHit(in[i])) {
             for (j = 0; j < nf; j++) {
@@ -97,9 +101,11 @@ void optimal() {
 
             p[repindex] = in[i];
             pgfaultcnt++;
+            printf(" | Page fault occurred. ");
             dispPages();
         } else {
-            printf(" No page fault");
+            printf(" | No page fault.");
+            dispPages();
         }
     }
     dispPgFaultCnt();
@@ -110,7 +116,7 @@ void lru() {
     int least[50];
 
     for (i = 0; i < n; i++) {
-        printf("\nFor %d :", in[i]);
+        printf("\nProcessing page %d", in[i]);
 
         if (!isHit(in[i])) {
             for (j = 0; j < nf; j++) {
@@ -138,9 +144,11 @@ void lru() {
 
             p[repindex] = in[i];
             pgfaultcnt++;
+            printf(" | Page fault occurred. ");
             dispPages();
         } else {
-            printf(" No page fault!");
+            printf(" | No page fault.");
+            dispPages();
         }
     }
     dispPgFaultCnt();
