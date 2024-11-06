@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <stdlib.h>
+
+#define MAX 20
+
+void bubble_asc(int arr[], int n) {
+    int i, j, temp;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void bubble_dsc(int arr[], int n) {
+    int i, j, temp;
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n - i - 1; j++) {
+            if (arr[j] < arr[j + 1]) {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+void print(int arr[], int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        printf("\t%d", arr[i]);
+    }
+    printf("\n\n");
+}
+
+int main() {
+    int i, n, arr[MAX], f, pid;
+
+    printf("\nHOW MANY NUMBERS DO YOU WANT IN THE ARRAY: ");
+    scanf("%d", &n);
+
+    printf("ENTER ARRAY ELEMENTS: ");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &arr[i]);
+    }
+
+    pid = fork();
+
+    if (pid == 0) {
+        printf("\nChild Process (PID: %d) starts...\n", getpid());
+        sleep(5);
+
+        printf("\nChild Process PID: %d\n", getpid());
+        printf("Parent Process PPID: %d (Now, it's an orphan, parent is init)\n", getppid());
+
+        system("ps -el | grep init");
+
+        printf("\nARRAY IN ASCENDING ORDER: ");
+        bubble_asc(arr, n);
+        print(arr, n);
+
+    } else if (pid > 0) {
+        printf("\nParent Process (PID: %d) starts...\n", getpid());
+
+        sleep(2);
+
+        printf("\nParent waiting for child process to terminate...\n");
+
+        f = wait(0);
+
+        printf("\nChild terminated, PID: %d\n", f);
+        printf("Parent PID: %d\n", getpid());
+        printf("Parent's Parent PPID (Bash): %d\n", getppid());
+
+        system("ps -el | grep Z");
+
+        printf("\nARRAY IN DESCENDING ORDER: ");
+        bubble_dsc(arr, n);
+        print(arr, n);
+
+    } else {
+        printf("\nERROR IN FORK!!");
+    }
+
+    return 0;
+}
