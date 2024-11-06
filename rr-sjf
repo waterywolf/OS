@@ -1,0 +1,225 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX 20
+
+typedef struct process {
+    int BT, AT, TAT, WT, PID;
+    char name[10];
+} process;
+
+typedef struct RQ {
+    process pr[MAX];
+    int f, r;
+} RQ;
+
+void get_PCB(process[], int*);
+void sort_AT(process[], int);
+void sort_BT(RQ*);
+void disp_table(process[], int);
+void SJF_P(process[], int);
+void RR(process[], int, int);
+float cal_avgwt(process[], int);
+float cal_avgtat(process[], int);
+void menu();
+void check_arrival(RQ*, process[], int, int);
+int get_first_process(process[], int);
+int get_total_time(process[], int);
+
+void menu() {
+    printf("\n\t\t****MENU*****");
+    printf("\n\t\t1. RR");
+    printf("\n\t\t2. SJF P");
+    printf("\n\t\t3. EXIT");
+    printf("\n\t\tEnter Choice: ");
+}
+
+int main() {
+    int ch, TQ, n;
+    process P[MAX];
+    float avg_WT, avg_TAT;
+
+    printf("\nEnter Time Quantum for Round Robin: ");
+    scanf("%d", &TQ);
+
+    get_PCB(P, &n);
+
+    do {
+        menu();
+        scanf("%d", &ch);
+
+        switch (ch) {
+            case 1:
+                RR(P, n, TQ);
+                disp_table(P, n);
+                avg_WT = cal_avgwt(P, n);
+                avg_TAT = cal_avgtat(P, n);
+                printf("\nAVERAGE WT: %.2f", avg_WT);
+                printf("\nAVERAGE TAT: %.2f", avg_TAT);
+                break;
+
+            case 2:
+                SJF_P(P, n);
+                disp_table(P, n);
+                avg_WT = cal_avgwt(P, n);
+                avg_TAT = cal_avgtat(P, n);
+                printf("\nAVERAGE WT: %.2f", avg_WT);
+                printf("\nAVERAGE TAT: %.2f", avg_TAT);
+                break;
+
+            case 3:
+                break;
+        }
+    } while (ch != 3);
+
+    return 0;
+}
+
+float cal_avgwt(process p[], int n) {
+    float avg = 0;
+    for (int i = 0; i < n; i++) {
+        avg += p[i].WT;
+    }
+    return avg / n;
+}
+
+float cal_avgtat(process p[], int n) {
+    float avg = 0;
+    for (int i = 0; i < n; i++) {
+        avg += p[i].TAT;
+    }
+    return avg / n;
+}
+
+int get_first_process(process p[], int n) {
+    int min = p[0].AT;
+    int in = 0;
+    for (int i = 1; i < n; i++) {
+        if (p[i].AT < min) {
+            min = p[i].AT;
+            in = i;
+        }
+    }
+    return in;
+}
+
+void check_arrival(RQ *r, process p[], int time, int n) {
+    int flag;
+    for (int i = 0; i < n; i++) {
+        flag = 0;
+        for (int j = 0; j <= r->r; j++) {
+            if (strcmp(p[i].name, r->pr[j].name) == 0) {
+                flag = 1;
+                break;
+            }
+        }
+        if (p[i].AT == time && flag == 0) {
+            r->pr[++(r->r)] = p[i];
+        }
+    }
+}
+
+void RR(process p[], int n, int tq) {
+    int time = 0, count = 0;
+    RQ r;
+    r.f = r.r = -1;
+
+    int start = get_first_process(p, n);
+    r.pr[0] = p[start];
+    r.f = r.r = 0;
+
+    check_arrival(&r, p, time, n);
+
+    while (r.f != -1) {
+        for (count = 0; count < tq; count++) {
+            r.pr[r.f].BT--;
+            time++;
+            if (r.pr[r.f].BT == 0) break;
+            check_arrival(&r, p, time, n);
+        }
+
+        if (r.pr[r.f].BT == 0) {
+            p[r.pr[r.f].PID].TAT = time - r.pr[r.f].AT;
+            p[r.pr[r.f].PID].WT = p[r.pr[r.f].PID].TAT - p[r.pr[r.f].PID].BT;
+        } else {
+            r.pr[++r.r] = r.pr[r.f];
+        }
+
+        if (r.f == r.r) {
+            r.f = r.r = -1;
+        } else {
+            r.f++;
+        }
+    }
+}
+
+void sort_BT(RQ *r) {
+    process temp;
+    for (int i = r->f; i <= r->r; i++) {
+        for (int j = i + 1; j <= r->r; j++) {
+            if (r->pr[j].BT < r->pr[i].BT) {
+                temp = r->pr[j];
+                r->pr[j] = r->pr[i];
+                r->pr[i] = temp;
+            }
+        }
+    }
+}
+
+int get_total_time(process p[], int n) {
+    int sum = 0;
+    for (int i = 0; i < n; i++) {
+        sum += p[i].BT;
+    }
+    return sum;
+}
+
+void SJF_P(process p[], int n) {
+    int time = 0;
+    int sum = get_total_time(p, n);
+    RQ r;
+    r.f = r.r = -1;
+
+    int start = get_first_process(p, n);
+    r.pr[0] = p[start];
+    r.f = r.r = 0;
+
+    check_arrival(&r, p, time, n);
+
+    for (int i = 0; i < sum; i++) {
+        r.pr[r.f].BT--;
+        time++;
+
+        if (r.pr[r.f].BT == 0) {
+            p[r.pr[r.f].PID].TAT = time - r.pr[r.f].AT;
+            p[r.pr[r.f].PID].WT = p[r.pr[r.f].PID].TAT - p[r.pr[r.f].PID].BT;
+            r.f++;
+        }
+
+        sort_BT(&r);
+        check_arrival(&r, p, time, n);
+    }
+}
+
+void disp_table(process p[], int n) {
+    printf("\n\tPID\tNAME\tAT\tBT\tTAT\tWT");
+    for (int i = 0; i < n; i++) {
+        printf("\n\t%d\t%s\t%d\t%d\t%d\t%d", p[i].PID, p[i].name, p[i].AT, p[i].BT, p[i].TAT, p[i].WT);
+    }
+}
+
+void get_PCB(process p[], int *n) {
+    printf("\nEnter number of processes: ");
+    scanf("%d", n);
+
+    for (int i = 0; i < *n; i++) {
+        p[i].PID = i;
+        printf("\nEnter process name: ");
+        scanf("%s", p[i].name);
+        printf("\nEnter arrival time for process %s: ", p[i].name);
+        scanf("%d", &p[i].AT);
+        printf("\nEnter burst time for process %s: ", p[i].name);
+        scanf("%d", &p[i].BT);
+    }
+}
