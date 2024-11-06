@@ -1,0 +1,122 @@
+#!/bin/bash
+
+echo -e "Address Book\n"
+
+echo -e "File name:"
+read fname
+
+touch $fname
+
+# Add headers to the file if it's empty
+if [ ! -s $fname ]; then
+    echo -e "id \t name \t mobile_no \t salary \t location \t" >> $fname
+fi
+
+ch=0
+while [ $ch -ne 7 ]
+do
+    echo -e "\n1) Create Address Book"
+    echo -e "2) View Address Book"
+    echo -e "3) Insert a Record"
+    echo -e "4) Delete a Record"
+    echo -e "5) Modify a Record"
+    echo -e "6) Search a Record"
+    echo -e "7) Exit"
+    echo -e "Enter Your Choice:"
+    read ch
+
+    case $ch in
+        1)
+            echo "Enter number of records:"
+            read n
+            for ((i=0; i<$n; i++))
+            do
+                echo "Enter id:"
+                read id
+                echo "Enter name:"
+                read name
+                echo "Enter mobile number:"
+                read mno
+                echo "Enter salary:"
+                read sal
+                echo "Enter location:"
+                read loc
+                echo -e "$id \t $name \t $mno \t $sal \t $loc" >> $fname
+            done
+            ;;
+
+        2)
+            cat $fname
+            ;;
+
+        3)
+            echo "Enter id:"
+            read id
+            echo "Enter name:"
+            read name
+            echo "Enter mobile number:"
+            read mno
+            echo "Enter salary:"
+            read sal
+            echo "Enter location:"
+            read loc
+            echo -e "$id \t $name \t $mno \t $sal \t $loc" >> $fname
+            ;;
+
+        4)
+            echo "Enter Employee ID to delete:"
+            read id
+            if grep -qw $id $fname
+            then
+                grep -vw $id $fname > temp && mv temp $fname
+                echo "Record deleted successfully."
+            else
+                echo "Record not found."
+            fi
+            ;;
+
+        5)
+            echo "Enter Employee ID to modify:"
+            read id
+            if grep -qw $id $fname
+            then
+                grep -vw $id $fname > temp && mv temp $fname
+
+                echo "Enter new id:"
+                read newid
+                echo "Enter new name:"
+                read name
+                echo "Enter new mobile number:"
+                read mno
+                echo "Enter new salary:"
+                read sal
+                echo "Enter new location:"
+                read loc
+                echo -e "$newid \t $name \t $mno \t $sal \t $loc" >> $fname
+                echo "Record modified successfully."
+            else
+                echo "Record not found."
+            fi
+            ;;
+
+        6)
+            echo "Enter Employee ID to search:"
+            read id
+            if grep -qw $id $fname
+            then
+                echo "Record found:"
+                grep -w $id $fname
+            else
+                echo "Record not found."
+            fi
+            ;;
+
+        7)
+            echo "Exiting program."
+            ;;
+
+        *)
+            echo "Invalid choice. Please enter a number between 1 and 7."
+            ;;
+    esac
+done
