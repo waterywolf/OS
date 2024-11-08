@@ -52,6 +52,7 @@ int main() {
             perror("Error opening FIFO for writing");
             return 1;
         }
+        printf("Enter a Message:");
         fgets(str2, sizeof(str2), stdin);
         write(fd, str2, strlen(str2) + 1);
         close(fd);
